@@ -1,0 +1,85 @@
+
+type: "MLPredictionSubgraph"
+#input_stream: "input_vec"
+input_stream: "done"
+input_side_packet: "send_sock"
+output_stream: "result"
+
+#node {
+#  calculator: "SendDataOverSocketCalculator"
+#  input_stream: "DATA0:input_vec"
+#  input_side_packet: "SOCKET:send_sock"
+#  output_stream: "SEND:done"
+#  options : {
+#    [mediapipe.SocketDataCalculatorOptions.ext]{
+#      data: VEC_FLOAT_TYPE,
+#    }
+#  }
+#}
+
+node {
+  #calculator: "ReceiveDataOverSocketCalculator"
+  calculator: "TestCalculator"
+  input_stream: "RECEIVE:done"
+  input_side_packet: "SOCKET:send_sock"
+  output_stream: "DATA0:result"
+  options : {
+    [mediapipe.SocketDataCalculatorOptions.ext]{
+      data: VEC_FLOAT_TYPE,
+    }
+  }
+}
+
+
+#SELECT_TF_OPS not supported by mediapipe inference calculator
+
+#node {
+#  calculator: "VectorFloatToMediapipeTensorCalculator"
+#  input_stream: "input_vec"
+#  output_stream: "input_tensor"
+#}
+
+#node {
+#  calculator: "ConstantSidePacketCalculator"
+#  output_side_packet: "PACKET:model_path"
+#  options: {
+#    [mediapipe.ConstantSidePacketCalculatorOptions.ext]: {
+#      packet { string_value : "mediapipe/examples/subgraph_testing/tfLite_models/thumb_gesture2.tflite"}
+#    }
+#  }
+#}
+
+#node {
+#  calculator: "LocalFileContentsCalculator"
+#  input_side_packet: "FILE_PATH:model_path"
+#  output_side_packet: "CONTENTS:model_blob"
+#  options: {
+#    [mediapipe.LocalFileContentsCalculatorOptions.ext]: {
+#      text_mode: false
+#    }
+#  }
+#}
+
+#node {
+#  calculator: "TfLiteModelCalculator"
+#  input_side_packet: "MODEL_BLOB:model_blob"
+#  output_side_packet: "MODEL:model"
+#}
+
+#node {
+#  calculator: "InferenceCalculator"
+#  input_side_packet: "MODEL:model"
+#  input_stream: "TENSORS:input_tensor"
+#  output_stream: "TENSORS:result_tensor"
+#  options: {
+#    [mediapipe.InferenceCalculatorOptions.ext] {
+#      delegate: { tflite {} }
+#    }
+#  }
+#}
+
+#node {
+#  calculator: "MediapipeTensorToVectorFloatCalculator"
+#	input_stream: "prediction"
+#	output_stream: "result_vectors"
+#}

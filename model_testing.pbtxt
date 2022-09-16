@@ -1,0 +1,42 @@
+
+input_stream: "input_video"
+input_side_packet: "FILE_PATH:model_path"
+output_stream: "result_vectors"
+
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:num_hands"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 2 }
+    }
+  }
+}
+
+node {
+  calculator: "HandLandmarkTrackingCpu"
+  input_stream: "IMAGE:input_video"
+  input_side_packet: "NUM_HANDS:num_hands"
+  output_stream: "LANDMARKS:landmarks"
+  output_stream: "HANDEDNESS:handedness"
+  output_stream: "PALM_DETECTIONS:multi_palm_detections"
+  output_stream: "HAND_ROIS_FROM_LANDMARKS:multi_hand_rects"
+  output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:multi_palm_rects"
+}
+
+node {
+  calculator: "HandInfoExtractionCalculator"
+  input_stream: "LANDMARKS:landmarks"
+  input_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:multi_palm_rects"
+  output_stream: "THUMB:thumb_infos"
+  #output_stream: "THUMB:thumbInfos"
+  #output_stream: "THUMB:thumbInfos"
+  #output_stream: "THUMB:thumbInfos"
+  #output_stream: "THUMB:thumbInfos"
+}
+
+node {
+  calculator: "MLPredictionSubgraph"
+  input_stream: "thumb_tensors"
+  output_stream: "prediction"
+}

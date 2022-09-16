@@ -1,0 +1,24 @@
+
+syntax = "proto2";
+
+package mediapipe;
+
+import "mediapipe/framework/calculator.proto";
+
+message SocketDataCalculatorOptions {
+  extend CalculatorOptions {
+    optional SocketDataCalculatorOptions ext = 1888492;
+  }
+
+	enum DataType {
+    INT_TYPE = 0;
+    FLOAT_TYPE = 1;
+		STRING_TYPE = 2;
+    VEC_INT_TYPE = 3;
+    VEC_FLOAT_TYPE = 4;
+  }
+
+	optional int32 port = 1 [default = 59832];
+	optional string target_ip = 2 [default = "127.0.0.1"];
+  repeated DataType data = 3;
+}
