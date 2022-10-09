@@ -10,7 +10,28 @@ constexpr std::pair<int, int> HAND_PALM_CONNECTIONS[6] =
     {std::pair(0, 1), std::pair(0, 5), std::pair(9, 13), std::pair(13, 17), std::pair(5, 9), std::pair(0, 17)};
 constexpr int HAND_PALM_LANDMARKS[7] = {0, 1, 5, 9, 13, 17};
 constexpr std::pair<int, int> HAND_THUMB_CONNECTIONS[3] = {std::pair(1, 2), std::pair(2, 3), std::pair(3, 4)};
-constexpr int HAND_THUMB_LANDMARKS[4] = {1, 2, 3, 4};
+std::vector<int> HAND_THUMB_LANDMARKS = {1, 2, 3, 4};
+constexpr std::pair<int, int> HAND_INDEX_CONNECTIONS[3] = {std::pair(5, 6), std::pair(6, 7), std::pair(7, 8)};
+std::vector<int> HAND_INDEX_LANDMARKS[4] = {5, 6, 7, 8};
+constexpr std::pair<int, int> HAND_MIDDLE_CONNECTIONS[3] = {std::pair(9, 10), std::pair(10, 11), std::pair(11, 12)};
+std::vector<int> HAND_MIDDLE_LANDMARKS[4] = {9, 10, 11, 12};
+std::pair<int, int> HAND_RING_CONNECTIONS[3] = {std::pair(13, 14), std::pair(14, 15), std::pair(15, 16)};
+std::vector<int> HAND_RING_LANDMARKS[4] = {13, 14, 15, 16};
+std::pair<int, int> HAND_LITTLE_CONNECTIONS[3] = {std::pair(17, 18), std::pair(18, 19), std::pair(19, 20)};
+std::vector<int> HAND_LITTLE_LANDMARKS[4] = {17, 18, 19, 20}; 
+
+std::vector<float> getZCoords(std::vector<int> thumb_landmarks, mediapipe::NormalizedLandmarkList landmarks) {
+    std::vector<float> returnValue;
+    for (int i = 0; i < landmarks.landmark_size(); i++) {
+        if (std::find(std::begin(HAND_PALM_LANDMARKS), std::end(HAND_PALM_LANDMARKS), i) 
+                    != std::end(HAND_PALM_LANDMARKS) ||
+                std::find(std::begin(thumb_landmarks), std::end(thumb_landmarks), i) 
+                    != std::end(thumb_landmarks)) {
+                returnValue.push_back(landmarks.landmark(i).z());
+        }
+    }
+    return returnValue;
+}
 
 std::vector<float> getLineInfos(const std::pair<int, int> *connections, int numbOfConnections, float (*pts)[2]) {
     std::vector<float> returnValue;
@@ -54,6 +75,15 @@ void normalizeLandmarks(mediapipe::NormalizedLandmarkList landmarks, mediapipe::
     }
 }
 
+std::vector<float> fingerOutput(std::vector<int> finger_landmarks,mediapipe::NormalizedLandmarkList landmarks, 
+    const std::pair<int, int> *connections, int numbOfConnections, float (*pts)[2], std::vector<float> *palm_infos) {
+    std::vector<float> output = getZCoords(finger_landmarks, landmarks);
+    std::vector<float> infos = getLineInfos(connections, numbOfConnections, pts);
+    output.insert(output.end(), infos.begin(), infos.end());
+    output.insert(output.end(), palm_infos->begin(), palm_infos->end());
+    return output;
+}
+
 namespace mediapipe {
     class HandInfoExtractionCalculator : public CalculatorBase {
     public:
@@ -74,10 +104,33 @@ namespace mediapipe {
                     rois_palm.Get<std::vector<mediapipe::NormalizedRect>>();
                 float landmark_array[landmark_lists.at(0).landmark_size()][2];
                 normalizeLandmarks(landmark_lists.at(0), hand_rects.at(0), landmark_array);
-                Packet pOut = 
-                    MakePacket<std::vector<float>>(getLineInfos(HAND_PALM_CONNECTIONS, 6, landmark_array))
+
+                std::vector<float> palm_infos = getLineInfos(HAND_PALM_CONNECTIONS, 6, landmark_array);
+                Packet thumbOut = 
+                    MakePacket<std::vector<float>>(fingerOutput(HAND_THUMB_LANDMARKS, landmark_lists.at(0), HAND_THUMB_CONNECTIONS, 3, landmark_array, &palm_infos))
                         .At(cc->InputTimestamp());
-                cc->Outputs().Tag("THUMB").AddPacket(pOut);
+                cc->Outputs().Tag("THUMB").AddPacket(thumbOut);
+                /*
+                Packet indexOut = 
+                    MakePacket<std::vector<float>>(fingerOutput(HAND_INDEX_LANDMARKS, landmark_lists.at(0), HAND_INDEX_CONNECTIONS, 3, landmark_array, &palm_infos))
+                        .At(cc->InputTimestamp());
+                cc->Outputs().Tag("INDEX").AddPacket(indexOut);
+                Packet middleOut = 
+                    MakePacket<std::vector<float>>(fingerOutput(HAND_MIDDLE_LANDMARKS, landmark_lists.at(0), HAND_MIDDLE_CONNECTIONS, 3, landmark_array, &palm_infos))
+                        .At(cc->InputTimestamp());
+                cc->Outputs().Tag("MIDDLE").AddPacket(middleOut);
+                Packet ringOut = 
+                    MakePacket<std::vector<float>>(fingerOutput(HAND_RING_LANDMARKS, landmark_lists.at(0), HAND_RING_CONNECTIONS, 3, landmark_array, &palm_infos))
+                        .At(cc->InputTimestamp());
+                cc->Outputs().Tag("RING").AddPacket(ringOut);
+                Packet littleOut = 
+                    MakePacket<std::vector<float>>(fingerOutput(HAND_LITTLE_LANDMARKS, landmark_lists.at(0), HAND_LITTLE_CONNECTIONS, 3, landmark_array, &palm_infos))
+                        .At(cc->InputTimestamp());
+                cc->Outputs().Tag("LITTLE").AddPacket(littleOut);
+                */
+            }
+            else {
+                return absl::InternalError("Hand not detected");
             }
             return OkStatus();
         }

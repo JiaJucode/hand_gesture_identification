@@ -61,6 +61,16 @@ mediapipe_proto_library(
     ],
 )
 
+mediapipe_proto_library(
+    name = "packet_time_delay_calculator_proto",
+    srcs = ["packet_time_delay_calculator_proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ]
+)
+
 cc_library(
     name = "send_data_over_socket_calculator",
     srcs = ["send_data_over_socket_calculator.cpp"],
@@ -86,8 +96,19 @@ cc_library(
 )
 
 cc_library(
-    name = "test_calculator",
-    srcs = ["test_calculator.cpp"],
+    name = "packet_time_delay_calculator",
+    srcs = ["packet_time_delay_calculator.cpp"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "init_server_calculator",
+    srcs = ["init_server_calculator.cpp"],
     visibility = ["//visibility:public"],
     deps = [
         "//mediapipe/framework:calculator_framework",

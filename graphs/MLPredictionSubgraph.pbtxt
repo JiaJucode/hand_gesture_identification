@@ -1,33 +1,53 @@
-
 type: "MLPredictionSubgraph"
-#input_stream: "input_vec"
-input_stream: "done"
-input_side_packet: "send_sock"
+input_stream: "input_vec"
+input_side_packet: "port_num"
 output_stream: "result"
 
-#node {
-#  calculator: "SendDataOverSocketCalculator"
-#  input_stream: "DATA0:input_vec"
-#  input_side_packet: "SOCKET:send_sock"
-#  output_stream: "SEND:done"
-#  options : {
-#    [mediapipe.SocketDataCalculatorOptions.ext]{
-#      data: VEC_FLOAT_TYPE,
-#    }
-#  }
-#}
+node {
+  calculator: "InitServerCalculator"
+  input_side_packet: "PORT:port_num"
+  output_side_packet: "SOCKET:send_sock"
+  output_side_packet: "START:init_delay"
+}
 
 node {
-  #calculator: "ReceiveDataOverSocketCalculator"
-  calculator: "TestCalculator"
-  input_stream: "RECEIVE:done"
+  calculator: "SendDataOverSocketCalculator"
+  input_stream: "READY:delayed_send"
+  input_stream: "DATA0:input_vec"
   input_side_packet: "SOCKET:send_sock"
+  output_stream: "COMPLETE:receive"
+  input_stream_info: {
+    tag_index: "READY"
+    back_edge: true
+  }
+  input_stream_handler {
+    input_stream_handler: 'EarlyCloseInputStreamHandler'
+  }
+  options : {
+    [mediapipe.SocketDataCalculatorOptions.ext]{
+      data: VEC_FLOAT_TYPE,
+    }
+  }
+}
+
+node {
+  calculator: "ReceiveDataOverSocketCalculator"
+  input_stream: "READY:receive"
+  input_side_packet: "SOCKET:send_sock"
+  output_stream: "COMPLETE:send"
   output_stream: "DATA0:result"
   options : {
     [mediapipe.SocketDataCalculatorOptions.ext]{
       data: VEC_FLOAT_TYPE,
     }
   }
+}
+
+node {
+  calculator: "PacketTimeDelayCalculator"
+  input_stream: "send"
+  input_side_packet: "init_delay"
+  output_stream: "delayed_send"
 }
 
 

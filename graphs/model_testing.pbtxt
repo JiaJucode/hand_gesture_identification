@@ -1,0 +1,126 @@
+
+input_stream: "input_video"
+#model loaded with tensorflow due to SELECT_TF_OPS not being supported
+#input_side_packet: "FILE_PATH:model_path"
+#output_stream: "thumb_infos"
+#input_side_packet: "send_sock"
+output_stream: "prediction"
+
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:num_hands"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 2 }
+    }
+  }
+}
+
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:thumb_port_num"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 59832 }
+    }
+  }
+}
+
+#node {
+#  calculator: "ConstantSidePacketCalculator"
+#  output_side_packet: "PACKET:index_port_num"
+#  node_options: {
+#    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+#      packet { int_value: 59833 }
+#    }
+#  }
+#}
+
+#node {
+#  calculator: "ConstantSidePacketCalculator"
+#  output_side_packet: "PACKET:middle_port_num"
+#  node_options: {
+#    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+#      packet { int_value: 59834 }
+#    }
+#  }
+#}
+
+#node {
+#  calculator: "ConstantSidePacketCalculator"
+#  output_side_packet: "PACKET:ring_port_num"
+#  node_options: {
+#    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+#      packet { int_value: 59835 }
+#    }
+#  }
+#}
+
+#node {
+#  calculator: "ConstantSidePacketCalculator"
+#  output_side_packet: "PACKET:little_port_num"
+#  node_options: {
+#    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+#      packet { int_value: 59836 }
+#    }
+#  }
+#}
+
+node {
+  calculator: "HandLandmarkTrackingCpu"
+  input_stream: "IMAGE:input_video"
+  input_side_packet: "NUM_HANDS:num_hands"
+  output_stream: "LANDMARKS:landmarks"
+  output_stream: "HANDEDNESS:handedness"
+  output_stream: "PALM_DETECTIONS:multi_palm_detections"
+  output_stream: "HAND_ROIS_FROM_LANDMARKS:multi_hand_rects"
+  output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:multi_palm_rects"
+}
+
+node {
+  calculator: "HandInfoExtractionCalculator"
+  input_stream: "LANDMARKS:landmarks"
+  input_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:multi_palm_rects"
+  output_stream: "THUMB:thumb_infos"
+  #output_stream: "INDEX:index_infos"
+  #output_stream: "MIDDLE:middle_infos"
+  #output_stream: "RING:ring_infos"
+  #output_stream: "LITTLE:little_infos"
+}
+
+node {
+  calculator: "MLPredictionSubgraph"
+  input_stream: "thumb_infos"
+  input_side_packet: "thumb_port_num"
+  output_stream: "prediction"
+}
+
+#node {
+#  calculator: "MLPredictionSubgraph"
+#  input_stream: "index_infos"
+#  input_side_packet: "index_port_num"
+#  output_stream: "index_prediction"
+#}
+
+#node {
+#  calculator: "MLPredictionSubgraph"
+#  input_stream: "middle_infos"
+#  input_side_packet: "middle_port_num"
+#  output_stream: "middle_prediction"
+#}
+
+#node {
+#  calculator: "MLPredictionSubgraph"
+#  input_stream: "ring_infos"
+#  input_side_packet: "ring_port_num"
+#  output_stream: "ring_prediction"
+#}
+
+#node {
+#  calculator: "MLPredictionSubgraph"
+#  input_stream: "little_infos"
+#  input_side_packet: "little_port_num"
+#  output_stream: "little_prediction"
+#}
+
+

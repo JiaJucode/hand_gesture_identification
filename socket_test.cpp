@@ -15,10 +15,9 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 
-constexpr char FILE_PATH[] = "mediapipe/examples/subgraph_testing/MLPredictionSubgraph.pbtxt";
+constexpr char FILE_PATH[] = "mediapipe/examples/subgraph_testing/graphs/MLPredictionSubgraph.pbtxt";
 constexpr char INPUT_STREAM[] = "input_vec";
 constexpr char OUTPUT_STREAM[] = "result";
-constexpr char SIDE_INPUT_PACKET[] = "send_sock";
 
 absl::Status run() {
     std::string graph_config_contents;
@@ -35,94 +34,38 @@ absl::Status run() {
     ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller poller,
         graph.AddOutputStreamPoller(OUTPUT_STREAM));
 
-
-//start server
-    int server_fd, new_socket;
-    const int PORT = 59832;
-    struct sockaddr_in address;
-    int opt = 1;
-    int addrlen = sizeof(address);
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0))
-        == 0) {
-        std::cout << "socket failed" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    if (setsockopt(server_fd, SOL_SOCKET,
-                   SO_REUSEADDR , &opt,
-                   sizeof(opt))) {
-        std::cout <<"setsockopt" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
-    if (bind(server_fd, (struct sockaddr*)&address,
-             sizeof(address))
-        < 0) {
-        exit(EXIT_FAILURE);
-    }
-    if (listen(server_fd, 10) < 0) {
-        std::cout << "listen" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    if ((new_socket
-         = accept(server_fd, (struct sockaddr*)&address,
-                  (socklen_t*)&addrlen))
-        < 0) {
-        std::cout << "accept failed" << std::endl;
-        exit(EXIT_FAILURE);
-    }
 //start graph
-    std::cout << "new socket: " << new_socket << std::endl;
-    mediapipe::Packet side = mediapipe::MakePacket<int>(new_socket);
-    MP_RETURN_IF_ERROR(graph.StartRun({{SIDE_INPUT_PACKET, side}}));
+    MP_RETURN_IF_ERROR(graph.StartRun({}));
 
 //send data
-/*
-    std::vector<float> send_data;
-    for (int i = 0; i != 25; i++) {
-        send_data.push_back(i / 10);
-    }
 
-    size_t timestamp = 1;
+    std::vector<float> send_data{2.74559e-07, -0.013148, -0.0155419, -0.0179827, -0.0210028, -0.000436373, -0.00347011, -0.00940575, -0.0171704, 0.161262, 0.153599, 0.101334, 0.916365, 1.005153, 0.151101, 0.402794, 0.087270, 0.088359, 0.104345, 0.416706, 0.851858, 1.238050, 0.342409, 0.773874, 0.812670};
+    size_t timestamp = 0;
     auto data_vec = absl::make_unique<std::vector<float>>(send_data);
     MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
             INPUT_STREAM, mediapipe::Adopt(data_vec.release())
             .At(mediapipe::Timestamp(timestamp))));
 
-    std::vector<float> send_data2;
-    for (int i = 0; i != 25; i++) {
-        send_data2.push_back(i / 10);
-    }
+    std::vector<float> send_data2{2.75179e-07, -0.0130221, -0.0150161, -0.0171573, -0.0199874, 0.000784876, -0.00229499, -0.0083347, -0.0161887, 0.162293, 0.146973, 0.096689, 0.916115, 1.147246, 0.153705, 0.399450, 0.086766, 0.088929, 0.101222, 0.404094, 0.813328, 1.200390, 0.323390, 0.753837, 0.842792};
     auto data_vec2 = absl::make_unique<std::vector<float>>(send_data2);
     MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
             INPUT_STREAM, mediapipe::Adopt(data_vec2.release())
-            .At(mediapipe::Timestamp(timestamp + 1)))); 
-            */
-    size_t timestamp = 1;
-    int send_data = 1;
-    auto data_ptr = absl::make_unique<int>(send_data);
-    MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
-            INPUT_STREAM, mediapipe::Adopt(data_ptr.release())
-            .At(mediapipe::Timestamp(timestamp + 1)))); 
+            .At(mediapipe::Timestamp(timestamp + 1))));
+
     std::cout << "data send" << std::endl;
 //receive data
-    while (true) {
-        mediapipe::Packet packet;
-        if (!poller.Next(&packet)) {
-            std::cout << "no more packets" << std::endl;
-                break;
-        }
-
+    mediapipe::Packet packet;
+    for (int i = 0; i != 2; i++) {
+        poller.Next(&packet);
         auto& result = packet.Get<std::vector<float>>();
 
         for (int i = 0; i != result.size(); i++) {
             std::cout << result.at(i) << ", ";
         }
         std::cout << "l" << std::endl;
+
     }
-    
-    MP_RETURN_IF_ERROR(graph.CloseInputStream(OUTPUT_STREAM));
+    MP_RETURN_IF_ERROR(graph.CloseInputStream(INPUT_STREAM));
     return graph.WaitUntilDone();
 }
 

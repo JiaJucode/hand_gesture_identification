@@ -71,6 +71,7 @@
         "functional": "cpp",
         "iterator": "cpp",
         "utility": "cpp",
-        "*.proto": "cpp"
+        "*.proto": "cpp",
+        "filesystem": "cpp"
     }
 }

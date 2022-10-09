@@ -13,7 +13,7 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 
-constexpr char FILE_PATH[] = "mediapipe/examples/subgraph_testing/hand_tracking.pbtxt";
+constexpr char FILE_PATH[] = "mediapipe/examples/subgraph_testing/graphs/hand_tracking.pbtxt";
 constexpr char WINDOW_NAME[] = "camera";
 constexpr char INPUT_STREAM[] = "input_video";
 constexpr char OUTPUT_STREAM[] = "output_video";

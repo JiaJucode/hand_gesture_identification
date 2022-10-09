@@ -21,12 +21,13 @@ namespace mediapipe {
         public CalculatorBase {
     public:
         static constexpr char PacketTag[] = "DATA";
+        static constexpr char InputTag[] = "READY";
         static constexpr char SidePacketTag[] = "SOCKET";
-        static constexpr char OutputTag[] = "SEND";
+        static constexpr char OutputTag[] = "COMPLETE";
         static Status GetContract(CalculatorContract *cc) {
             const auto& options = 
                 cc->Options<::mediapipe::SocketDataCalculatorOptions>();
-
+            cc->Inputs().Tag(InputTag).Set<int>();
             for (int i = 0; i < options.data_size(); i++) {
                 std::string tagname = PacketTag + std::to_string(i);
                 switch (options.data(i))
@@ -67,6 +68,10 @@ namespace mediapipe {
         Status Process(CalculatorContext *cc) override {
             const auto& options = 
                 cc->Options<::mediapipe::SocketDataCalculatorOptions>();
+            int ready = cc->Inputs().Tag(InputTag).Value().Get<int>();
+            if (ready != 1) {
+                return  absl::InternalError("Not ready");
+            }
             for (int i = 0; i < options.data_size(); i++) {
                 std::string tagname = PacketTag + std::to_string(i);
                 switch (options.data(i))
@@ -98,9 +103,8 @@ namespace mediapipe {
                 }
                 }
             }
-            Packet pOut = MakePacket<int>(1);
+            Packet pOut = MakePacket<int>(1).At(cc->InputTimestamp());
             cc->Outputs().Tag(OutputTag).AddPacket(pOut);
-            std::cout << "send complete" << std::endl;
             return OkStatus();
         }
     private:
