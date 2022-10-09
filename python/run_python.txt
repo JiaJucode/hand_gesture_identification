@@ -1,0 +1,2 @@
+to load thumb model:
+python3 tflite_and_network.py tfLite_models/thumb_gesture1.tflite 59832

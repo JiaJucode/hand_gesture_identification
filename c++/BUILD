@@ -8,7 +8,7 @@ cc_binary(
     srcs = ["main.cpp"],
     visibility = ["//visibility:public"],
     deps = [
-        "//mediapipe/examples/subgraph_testing/Calculators:cout_calculator",
+        "//mediapipe/examples/c++/Calculators:cout_calculator",
         "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
@@ -28,8 +28,8 @@ cc_binary(
     name = "test",
     srcs = ["test.cpp"],
     deps = [
-        "//mediapipe/examples/subgraph_testing/graphs:MLPredictionSubgraph",
-        "//mediapipe/examples/subgraph_testing/Calculators:hand_info_extraction_calculator",
+        "//mediapipe/examples/c++/graphs:MLPredictionSubgraph",
+        "//mediapipe/examples/c++/Calculators:hand_info_extraction_calculator",
         "//mediapipe/calculators/core:constant_side_packet_calculator",
         "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
         "//mediapipe/framework:calculator_framework",
